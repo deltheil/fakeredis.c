@@ -1,0 +1,3 @@
+[submodule "fakeredis"]
+	path = fakeredis
+	url = https://github.com/catwell/fakeredis.git
