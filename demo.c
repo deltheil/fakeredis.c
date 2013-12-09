@@ -5,6 +5,7 @@
 
 #define EXEC_CMD(fk_CMD) \
   do { \
+    printf("redis> %s\n", (fk_CMD)); \
     char *fk_RESP = NULL; \
     if (fkredis_exec(redis, (fk_CMD), &fk_RESP) == FK_REDIS_OK) { \
       printf("%s\n", fk_RESP); \
