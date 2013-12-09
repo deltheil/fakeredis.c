@@ -37,6 +37,10 @@ main(void)
   EXEC_CMD("SADD lang python");
   EXEC_CMD("SADD lang lua");
   EXEC_CMD("SMEMBERS lang");
+  EXEC_CMD("LPUSH cities paris");
+  EXEC_CMD("LPUSH cities new-york");
+  EXEC_CMD("LPUSH cities tokyo");
+  EXEC_CMD("LRANGE cities 0 -1");
 
   fkredis_close(redis);
 
