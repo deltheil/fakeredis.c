@@ -8,7 +8,59 @@
 #include <lualib.h>
 #include <lauxlib.h>
 
-#define FK_REDIS_LUA_MODULE "fakeredis"
+#define FK_LUA_REDIS_MODULE   "fakeredis"
+#define FK_LUA_REDIS          "R"
+#define FK_LUA_TOKENIZE       "_tokenize"
+#define FK_LUA_FMT            "_fmt"
+#define FK_LUA_EXEC           "_exec"
+
+static const char *fk_lua_tokenize = \
+FK_LUA_TOKENIZE " = function(cmd)\n"
+"  local args = {}\n"
+"  for tok in string.gmatch(cmd, \"%S+\") do\n"
+"    args[#args+1] = tok\n"
+"  end\n"
+"  return args\n"
+"end\n";
+
+static const char *fk_lua_fmt = \
+FK_LUA_FMT " = function(res)\n"
+"  if type(res) == \"number\" then\n"
+"    return \"(integer) \" .. res\n"
+"  elseif type(res) == \"nil\" then\n"
+"    return \"(nil)\"\n"
+"  elseif type(res) == \"table\" then\n"
+"    local t = {}\n"
+"    for k, v in pairs(res) do\n"
+"      if type(k) == \"number\" then\n"
+"        t[#t+1] = k .. \") \" .. v\n"
+"      else\n"
+"        t[#t+1] = #t+1 .. \") \" .. k\n"
+"        t[#t+1] = #t+1 .. \") \" .. v\n"
+"      end\n"
+"    end\n"
+"    return table.concat(t, \"\\n\")\n"
+"  else\n"
+"    return tostring(res)\n"
+"  end\n"
+"end\n";
+
+static const char *fk_lua_exec = \
+FK_LUA_EXEC " = function(rds, cmd)\n"
+"  args = _tokenize(cmd)\n"
+"  cmd = string.lower(table.remove(args, 1))\n"
+"  return _fmt(rds[cmd](rds, unpack(args)))\n"
+"end";
+
+#define FK_LOAD_LUA_FUNC(fk_LUA_FUNC) \
+  do { \
+    if (luaL_loadstring(lua, (fk_LUA_FUNC)) != 0 || \
+        lua_pcall(lua, 0, 0, 0) != 0) { \
+      report_lua_error(lua); \
+      goto err; \
+    } \
+    lua_settop(lua, 0); \
+  } while (0)
 
 #define FK_MEMDUP(fk_DEST, fk_SRC, fk_SIZ) \
   do { \
@@ -18,19 +70,6 @@
   } while (0)
 
 #define FK_STRDUP(fk_DEST, fk_SRC) FK_MEMDUP(fk_DEST, fk_SRC, strlen((fk_SRC)))
-
-struct fk_list {
-  char **ary;
-  int size;
-  int alloc;
-};
-
-static struct fk_list *fk_list_new(void);
-static void fk_list_push(struct fk_list *l, char *elem);
-static char *fk_list_join(struct fk_list *l, int *size);
-static void fk_list_del(struct fk_list *l);
-static struct fk_list *fk_tokenize(const char *cmd);
-static char *fk_tolower(char *str);
 
 static void report_lua_error(lua_State *lua);
 static void report_error(lua_State *lua, const char *err);
@@ -52,13 +91,13 @@ fkredis_open(void **redis, const char *path)
   }
   /* require "fakeredis" */
   lua_getglobal(lua, "require");
-  lua_pushstring(lua, FK_REDIS_LUA_MODULE);
+  lua_pushstring(lua, FK_LUA_REDIS_MODULE);
   if (lua_pcall(lua, 1, 1, 0) != 0) {
     report_lua_error(lua);
     goto err;
   }
   if (lua_gettop(lua) < 1 || !lua_istable(lua, -1)) {
-    report_error(lua, "error: cannot load " FK_REDIS_LUA_MODULE " Lua module");
+    report_error(lua, "error: cannot load " FK_LUA_REDIS_MODULE " Lua module");
     goto err;
   }
   /* R = fakeredis.new() */
@@ -68,8 +107,12 @@ fkredis_open(void **redis, const char *path)
     report_lua_error(lua);
     goto err;
   }
-  lua_setglobal(lua, "R");
+  lua_setglobal(lua, FK_LUA_REDIS);
   lua_settop(lua, 0);
+  /* load global Lua utils */
+  FK_LOAD_LUA_FUNC(fk_lua_tokenize);
+  FK_LOAD_LUA_FUNC(fk_lua_fmt);
+  FK_LOAD_LUA_FUNC(fk_lua_exec);
   *redis = lua;
   return FK_REDIS_OK;
 
@@ -84,74 +127,22 @@ int
 fkredis_exec(void *redis, const char *cmd, char **resp)
 {
   lua_State *lua = (lua_State *) redis;
-  struct fk_list *tokens = fk_tokenize(cmd);
-  if (!tokens->size) {
-    report_error(lua, "command not implemented");
-    goto err;
-  }
-  /* check if the command exists */
-  const char *name = fk_tolower(tokens->ary[0]);
-  lua_getglobal(lua, "R");
-  lua_pushstring(lua, name);
-  lua_gettable(lua, -2);
-  if (lua_isnil(lua, -1)) {
-    report_error(lua, "command not implemented");
-    goto err;
-  }
-  /* push the args and call the command */
-  lua_getglobal(lua, "R");
-  for (int i = 1; i < tokens->size; i++) {
-    lua_pushstring(lua, tokens->ary[i]);
-  }
-  if (lua_pcall(lua, tokens->size, 1, 0) != 0) {
+  lua_getglobal(lua, FK_LUA_EXEC);
+  lua_getglobal(lua, FK_LUA_REDIS);
+  lua_pushstring(lua, cmd);
+  if (lua_pcall(lua, 2, 1, 0) != 0) {
     report_lua_error(lua);
     goto err;
   }
-  if (lua_gettop(lua) < 1) {
+  if (lua_gettop(lua) < 1 || !lua_isstring(lua, -1)) {
     report_error(lua, "unexpected result");
     goto err;
   }
-  size_t rsiz;
-  const char *rbuf;
-  int num, lsize;
-  switch (lua_type(lua, -1)) {
-    case LUA_TNIL:
-      FK_STRDUP(*resp, "(null)");
-      break;
-    case LUA_TNUMBER:
-    case LUA_TSTRING:
-      rbuf = lua_tolstring(lua, -1, &rsiz);
-      FK_MEMDUP(*resp, rbuf, rsiz);
-      break;
-    case LUA_TBOOLEAN:
-      FK_STRDUP(*resp, lua_toboolean(lua, -1) ? "true" : "false");
-      break;
-    case LUA_TTABLE:
-      if (!strcmp(name, "hgetall")) {
-        /* Hashes do NOT return sequences: we must handle this */
-        FK_STRDUP(*resp, "(multi result)");
-      }
-      else {
-        num = lua_rawlen(lua, -1);
-        struct fk_list *l = fk_list_new();
-        for (int i = 1; i <= num; i++) {
-          lua_rawgeti(lua, -1, i);
-          fk_list_push(l, strdup(lua_tostring(lua, -1)));
-          lua_pop(lua, 1);
-        }
-        *resp = fk_list_join(l, &lsize);
-      }
-      break;
-    default:
-      FK_STRDUP(*resp, "<unknown>");
-      break;
-  }
-  fk_list_del(tokens);
+  FK_STRDUP(*resp, lua_tostring(lua, -1));
   lua_settop(lua, 0);
   return FK_REDIS_OK;
 
 err:
-  fk_list_del(tokens);
   lua_settop(lua, 0);
   return FK_REDIS_ERROR;
 }
@@ -174,101 +165,4 @@ report_lua_error(lua_State *lua)
 {
   report_error(lua, lua_tostring(lua, -1));
   lua_pop(lua, 1);
-}
-
-static struct fk_list *
-fk_list_new(void)
-{
-  struct fk_list *l = malloc(sizeof(*l));
-  l->ary = malloc(4*sizeof(char *));
-  l->alloc = 4;
-  l->size = 0;
-  return l;
-}
-
-/* Note: it transfers ownership */
-static void
-fk_list_push(struct fk_list *l, char *elem)
-{
-  if (l->size >= l->alloc) {
-    l->alloc = 2 * l->alloc;
-    l->ary = realloc(l->ary, l->alloc * sizeof(char *));
-  }
-  l->ary[l->size++] = elem;
-}
-
-static char *
-fk_list_join(struct fk_list *l, int *size)
-{
-  if (!l->size) return NULL;
-  int len = 2 + (l->size - 1) * 2 + 1;
-  for (int i = 0; i < l->size; i++)
-    len += strlen(l->ary[i]);
-  char *str = malloc(len);
-  char *wp = str;
-  *wp++ = '[';
-  for (int i = 0; i < l->size; i++) {
-    int n = strlen(l->ary[i]);
-    memcpy(wp, l->ary[i], n);
-    wp += n;
-    if (i < l->size - 1) {
-      *wp++ = ',';
-      *wp++ = ' ';
-    }
-  }
-  *wp++ = ']';
-  *wp++ = '\0';
-  *size = len;
-  return str;
-}
-
-static void
-fk_list_del(struct fk_list *l)
-{
-  if (l) {
-    for (int i = 0; i < l->size; i++) {
-      free(l->ary[i]);
-    }
-    free(l->ary);
-    free(l);
-  }
-}
-
-static struct fk_list *
-fk_tokenize(const char *cmd)
-{
-  struct fk_list *tokens = fk_list_new();
-  const unsigned char *c1 = (unsigned char *) cmd;
-  while (*c1 != '\0') {
-    while (*c1 <= ' ') {
-      c1++;
-    }
-    const unsigned char *c2 = c1;
-    while (*c2 > ' ') {
-      c2++;
-    }
-    if (c2 > c1) {
-      char *tok;
-      FK_MEMDUP(tok, c1, c2 - c1);
-      fk_list_push(tokens, tok);
-    }
-    if (*c2 != '\0') {
-      c1 = c2 + 1;
-    }
-    else {
-      break;
-    }
-  }
-  return tokens;
-}
-
-static char *
-fk_tolower(char *str)
-{
-  char *c = str;
-  while (*c != '\0') {
-    if (*c >= 'A' && *c <= 'Z') *c += 'a' - 'A';
-    c++;
-  }
-  return str;
 }
