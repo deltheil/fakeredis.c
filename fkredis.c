@@ -45,9 +45,6 @@ static int fk_sleep(lua_State *lua);
 static void report_lua_error(lua_State *lua);
 static void report_error(lua_State *lua, const char *err);
 
-/* TODO: store an user data within the Lua state so that the caller can get the
-         error message or log the error string himself */
-
 int
 fkredis_open(void **redis)
 {
