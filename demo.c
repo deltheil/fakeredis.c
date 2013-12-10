@@ -11,6 +11,9 @@
       printf("%s\n", fk_RESP); \
       free(fk_RESP); \
     } \
+    else { \
+      fprintf(stderr, "%s\n", fkredis_error(redis)); \
+    } \
   } while (0)
 
 int
@@ -18,8 +21,14 @@ main(void)
 {
   void *redis = NULL;
   if (fkredis_open(&redis, "./fakeredis/fakeredis.lua") != FK_REDIS_OK) {
+    fprintf(stderr, "ERR can't open. Exiting...\n");
+    fkredis_close(redis);
     exit(1);
   }
+
+  /*EXEC_CMD("SET foo bar");
+  EXEC_CMD("GET foo");
+  EXEC_CMD("HSET foo scm git");*/
 
   EXEC_CMD("SET foo bar");
   EXEC_CMD("GET foo");

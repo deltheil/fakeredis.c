@@ -17,6 +17,11 @@ int fkredis_open(void **redis, const char *path);
  */
 int fkredis_exec(void *redis, const char *cmd, char **resp);
 
+/*
+ * Get the last happened error (if any).
+ */
+const char *fkredis_error(void *redis);
+
 /* Close the Redis engine after use
  */
 void fkredis_close(void *redis);

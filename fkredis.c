@@ -14,6 +14,7 @@
 #define FK_LUA_TOKENIZE       "_tokenize"
 #define FK_LUA_FMT            "_fmt"
 #define FK_LUA_EXEC           "_exec"
+#define FK_LUA_ERR            "_err"
 
 static const char *fk_lua_tokenize = \
 FK_LUA_TOKENIZE " = function(cmd)\n"
@@ -58,9 +59,16 @@ FK_LUA_EXEC " = function(rds, cmd)\n"
     if (luaL_loadstring(lua, (fk_LUA_FUNC)) != 0 || \
         lua_pcall(lua, 0, 0, 0) != 0) { \
       report_lua_error(lua); \
-      goto err; \
+      return FK_REDIS_ERROR; \
     } \
     lua_settop(lua, 0); \
+  } while (0)
+
+#define FK_LUA_GET_ERR(fk_ERR, fk_LUA) \
+  do { \
+    lua_getglobal((fk_LUA), FK_LUA_ERR); \
+    (fk_ERR) = lua_touserdata((fk_LUA), -1); \
+    lua_settop((fk_LUA), 0); \
   } while (0)
 
 #define FK_MEMDUP(fk_DEST, fk_SRC, fk_SIZ) \
@@ -88,27 +96,30 @@ fkredis_open(void **redis, const char *path)
     return FK_REDIS_ERROR;
   }
   luaL_openlibs(lua);
+  char **fkerr = lua_newuserdata(lua, sizeof(*fkerr));
+  *fkerr = NULL;
+  lua_setglobal(lua, FK_LUA_ERR);
   if (luaL_loadfile(lua, path) != 0 || lua_pcall(lua, 0, 0, 0) != 0) {
     report_lua_error(lua);
-    goto err;
+    return FK_REDIS_ERROR;
   }
   /* require "fakeredis" */
   lua_getglobal(lua, "require");
   lua_pushstring(lua, FK_LUA_REDIS_MODULE);
   if (lua_pcall(lua, 1, 1, 0) != 0) {
     report_lua_error(lua);
-    goto err;
+    return FK_REDIS_ERROR;
   }
   if (lua_gettop(lua) < 1 || !lua_istable(lua, -1)) {
-    report_error(lua, "error: cannot load " FK_LUA_REDIS_MODULE " Lua module");
-    goto err;
+    report_error(lua, "ERR cannot load " FK_LUA_REDIS_MODULE " Lua module");
+    return FK_REDIS_ERROR;
   }
   /* R = fakeredis.new() */
   lua_pushstring(lua, "new");
   lua_gettable(lua, -2);
   if (lua_pcall(lua, 0, 1, 0) != 0) {
     report_lua_error(lua);
-    goto err;
+    return FK_REDIS_ERROR;
   }
   lua_setglobal(lua, FK_LUA_REDIS);
   lua_settop(lua, 0);
@@ -124,12 +135,6 @@ fkredis_open(void **redis, const char *path)
   FK_LOAD_LUA_FUNC(fk_lua_exec);
   *redis = lua;
   return FK_REDIS_OK;
-
-err:
-  if (lua) {
-    lua_close(lua);
-  }
-  return FK_REDIS_ERROR;
 }
 
 int
@@ -144,7 +149,7 @@ fkredis_exec(void *redis, const char *cmd, char **resp)
     goto err;
   }
   if (lua_gettop(lua) < 1 || !lua_isstring(lua, -1)) {
-    report_error(lua, "unexpected result");
+    report_error(lua, "ERR unexpected result");
     goto err;
   }
   FK_STRDUP(*resp, lua_tostring(lua, -1));
@@ -156,10 +161,24 @@ err:
   return FK_REDIS_ERROR;
 }
 
+const char *
+fkredis_error(void *redis)
+{
+  char **fkerr;
+  FK_LUA_GET_ERR(fkerr, redis);
+  return *fkerr;
+}
+
 void
 fkredis_close(void *redis)
 {
-  lua_close(redis);
+  lua_State *lua = (lua_State *) redis;
+  if (lua) {
+    char **fkerr;
+    FK_LUA_GET_ERR(fkerr, lua);
+    free(*fkerr);
+    lua_close(lua);
+  }
 }
 
 static int
@@ -178,8 +197,11 @@ fk_sleep(lua_State *lua)
 static void
 report_error(lua_State *lua, const char *err)
 {
-  (void)lua;
-  fprintf(stderr, "ERR %s\n", err);
+  char **fkerr;
+  FK_LUA_GET_ERR(fkerr, lua);
+  free(*fkerr);
+  /* TODO: post process the error string to filter out internal stuff */
+  FK_STRDUP(*fkerr, err);
 }
 
 static void
