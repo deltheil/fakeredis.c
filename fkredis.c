@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h> /* sleep */
 
 #include <lua.h>
 #include <lualib.h>
@@ -71,6 +72,8 @@ FK_LUA_EXEC " = function(rds, cmd)\n"
 
 #define FK_STRDUP(fk_DEST, fk_SRC) FK_MEMDUP(fk_DEST, fk_SRC, strlen((fk_SRC)))
 
+static int fk_sleep(lua_State *lua);
+
 static void report_lua_error(lua_State *lua);
 static void report_error(lua_State *lua, const char *err);
 
@@ -108,6 +111,12 @@ fkredis_open(void **redis, const char *path)
     goto err;
   }
   lua_setglobal(lua, FK_LUA_REDIS);
+  lua_settop(lua, 0);
+  /* hook up the sleep(3) function (required by fakeredis.lua) */
+  lua_getglobal(lua, FK_LUA_REDIS);
+  lua_pushstring(lua, "sleep");
+  lua_pushcfunction(lua, fk_sleep);
+  lua_settable(lua, -3);
   lua_settop(lua, 0);
   /* load global Lua utils */
   FK_LOAD_LUA_FUNC(fk_lua_tokenize);
@@ -151,6 +160,19 @@ void
 fkredis_close(void *redis)
 {
   lua_close(redis);
+}
+
+static int
+fk_sleep(lua_State *lua)
+{
+  int n = lua_gettop(lua);
+  if (n != 1 || !lua_isnumber(lua, 1)) {
+    lua_pushstring(lua, "invalid args for sleep(3)");
+    lua_error(lua);
+  }
+  unsigned int seconds = lua_tonumber(lua, -1);
+  lua_pushnumber(lua, sleep(seconds));
+  return 1;
 }
 
 static void
