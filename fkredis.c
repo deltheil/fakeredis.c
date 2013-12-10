@@ -85,6 +85,7 @@ fkredis_open(void **redis)
   FK_LOAD_LUA_MODULE(FK_LUA_TOKENIZE, fk_lua_tokenize);
   FK_LOAD_LUA_MODULE(FK_LUA_FMT, fk_lua_fmt);
   FK_LOAD_LUA_MODULE(FK_LUA_EXEC, fk_lua_exec);
+  FK_LOAD_LUA_MODULE(FK_LUA_FILTERR, fk_lua_filterr);
   *redis = lua;
   return FK_REDIS_OK;
 }
@@ -162,13 +163,27 @@ report_error(lua_State *lua, const char *err)
   char **fkerr;
   FK_LUA_GET_ERR(fkerr, lua);
   free(*fkerr);
-  /* TODO: post process the error string to filter out internal stuff */
-  FK_STRDUP(*fkerr, err);
+  lua_getglobal(lua, FK_LUA_FILTERR);
+  lua_pushstring(lua, err);
+  if (lua_pcall(lua, 1, 1, 0) != 0) {
+    goto fail;
+  }
+  if (lua_gettop(lua) < 1 || !lua_isstring(lua, -1)) {
+    goto fail;
+  }
+  FK_STRDUP(*fkerr, lua_tostring(lua, -1));
+  lua_settop(lua, 0);
+  return;
+
+fail:
+  FK_STRDUP(*fkerr, "ERR internal error");
+  lua_settop(lua, 0);
 }
 
 static void
 report_lua_error(lua_State *lua)
 {
-  report_error(lua, lua_tostring(lua, -1));
+  const char *err = lua_tostring(lua, -1);
   lua_pop(lua, 1);
+  report_error(lua, err);
 }
