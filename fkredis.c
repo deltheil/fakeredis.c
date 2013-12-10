@@ -100,11 +100,21 @@ fkredis_exec(void *redis, const char *cmd, char **resp)
     report_lua_error(lua);
     goto err;
   }
-  if (lua_gettop(lua) < 1 || !lua_isstring(lua, -1)) {
+  if (lua_gettop(lua) < 1) {
     report_error(lua, "ERR unexpected result");
     goto err;
   }
-  FK_STRDUP(*resp, lua_tostring(lua, -1));
+  switch (lua_type(lua, -1)) {
+    case LUA_TSTRING:
+      FK_STRDUP(*resp, lua_tostring(lua, -1));
+      break;
+    case LUA_TNIL:
+      report_error(lua, "ERR command not supported");
+      goto err;
+    default:
+      report_error(lua, "ERR unexpected result");
+      goto err;
+  }
   lua_settop(lua, 0);
   return FK_REDIS_OK;
 
