@@ -19,17 +19,17 @@
 int
 main(void)
 {
+  const char *err = NULL;
   void *redis = NULL;
-  if (fkredis_open(&redis, "./fakeredis/fakeredis.lua") != FK_REDIS_OK) {
-    fprintf(stderr, "ERR can't open. Exiting...\n");
+  if (fkredis_open(&redis) != FK_REDIS_OK) {
+    err = fkredis_error(redis);
+    if (err) fprintf(stderr, "%s\n", err);
+    fprintf(stderr, "Exiting...\n");
     fkredis_close(redis);
     exit(1);
   }
 
-  /*EXEC_CMD("SET foo bar");
-  EXEC_CMD("GET foo");
-  EXEC_CMD("HSET foo scm git");*/
-
+  EXEC_CMD("PING");
   EXEC_CMD("SET foo bar");
   EXEC_CMD("GET foo");
   EXEC_CMD("SET scm git");

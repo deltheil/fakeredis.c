@@ -9,55 +9,15 @@
 #include <lualib.h>
 #include <lauxlib.h>
 
-#define FK_LUA_REDIS_MODULE   "fakeredis"
-#define FK_LUA_REDIS          "R"
-#define FK_LUA_TOKENIZE       "_tokenize"
-#define FK_LUA_FMT            "_fmt"
-#define FK_LUA_EXEC           "_exec"
-#define FK_LUA_ERR            "_err"
+#include "fklua.h"
 
-static const char *fk_lua_tokenize = \
-FK_LUA_TOKENIZE " = function(cmd)\n"
-"  local args = {}\n"
-"  for tok in string.gmatch(cmd, \"%S+\") do\n"
-"    args[#args+1] = tok\n"
-"  end\n"
-"  return args\n"
-"end\n";
+#define FK_LUA_REDIS   "R"      /* global fake Redis object */
+#define FK_LUA_ERR     "_err"   /* global error (userdata) */
 
-static const char *fk_lua_fmt = \
-FK_LUA_FMT " = function(res)\n"
-"  if type(res) == \"number\" then\n"
-"    return \"(integer) \" .. res\n"
-"  elseif type(res) == \"nil\" then\n"
-"    return \"(nil)\"\n"
-"  elseif type(res) == \"table\" then\n"
-"    local t = {}\n"
-"    for k, v in pairs(res) do\n"
-"      if type(k) == \"number\" then\n"
-"        t[#t+1] = k .. \") \" .. v\n"
-"      else\n"
-"        t[#t+1] = #t+1 .. \") \" .. k\n"
-"        t[#t+1] = #t+1 .. \") \" .. v\n"
-"      end\n"
-"    end\n"
-"    return table.concat(t, \"\\n\")\n"
-"  else\n"
-"    return tostring(res)\n"
-"  end\n"
-"end\n";
-
-static const char *fk_lua_exec = \
-FK_LUA_EXEC " = function(rds, cmd)\n"
-"  args = _tokenize(cmd)\n"
-"  cmd = string.lower(table.remove(args, 1))\n"
-"  return _fmt(rds[cmd](rds, unpack(args)))\n"
-"end";
-
-#define FK_LOAD_LUA_FUNC(fk_LUA_FUNC) \
+#define FK_LOAD_LUA_MODULE(fk_LUA_NAME, fk_LUA_CODE) \
   do { \
-    if (luaL_loadstring(lua, (fk_LUA_FUNC)) != 0 || \
-        lua_pcall(lua, 0, 0, 0) != 0) { \
+    if (luaL_loadbuffer(lua, (const char *) (fk_LUA_CODE), sizeof((fk_LUA_CODE)), \
+        (fk_LUA_NAME)) || lua_pcall(lua, 0, 0, 0) != 0) { \
       report_lua_error(lua); \
       return FK_REDIS_ERROR; \
     } \
@@ -89,7 +49,7 @@ static void report_error(lua_State *lua, const char *err);
          error message or log the error string himself */
 
 int
-fkredis_open(void **redis, const char *path)
+fkredis_open(void **redis)
 {
   lua_State *lua = luaL_newstate();
   if (!lua) {
@@ -99,19 +59,14 @@ fkredis_open(void **redis, const char *path)
   char **fkerr = lua_newuserdata(lua, sizeof(*fkerr));
   *fkerr = NULL;
   lua_setglobal(lua, FK_LUA_ERR);
-  if (luaL_loadfile(lua, path) != 0 || lua_pcall(lua, 0, 0, 0) != 0) {
-    report_lua_error(lua);
-    return FK_REDIS_ERROR;
-  }
-  /* require "fakeredis" */
-  lua_getglobal(lua, "require");
-  lua_pushstring(lua, FK_LUA_REDIS_MODULE);
-  if (lua_pcall(lua, 1, 1, 0) != 0) {
-    report_lua_error(lua);
-    return FK_REDIS_ERROR;
+  /* load main fakeredis.lua library */
+  if (luaL_loadbuffer(lua, (const char *) fk_lua_fakeredis, sizeof(fk_lua_fakeredis),
+      FK_LUA_FAKEREDIS) || lua_pcall(lua, 0, 1, 0) != 0) {
+      report_lua_error(lua);
+      return FK_REDIS_ERROR;
   }
   if (lua_gettop(lua) < 1 || !lua_istable(lua, -1)) {
-    report_error(lua, "ERR cannot load " FK_LUA_REDIS_MODULE " Lua module");
+    report_error(lua, "ERR cannot load " FK_LUA_FAKEREDIS " Lua module");
     return FK_REDIS_ERROR;
   }
   /* R = fakeredis.new() */
@@ -129,10 +84,10 @@ fkredis_open(void **redis, const char *path)
   lua_pushcfunction(lua, fk_sleep);
   lua_settable(lua, -3);
   lua_settop(lua, 0);
-  /* load global Lua utils */
-  FK_LOAD_LUA_FUNC(fk_lua_tokenize);
-  FK_LOAD_LUA_FUNC(fk_lua_fmt);
-  FK_LOAD_LUA_FUNC(fk_lua_exec);
+  /* load internal Lua tools */
+  FK_LOAD_LUA_MODULE(FK_LUA_TOKENIZE, fk_lua_tokenize);
+  FK_LOAD_LUA_MODULE(FK_LUA_FMT, fk_lua_fmt);
+  FK_LOAD_LUA_MODULE(FK_LUA_EXEC, fk_lua_exec);
   *redis = lua;
   return FK_REDIS_OK;
 }

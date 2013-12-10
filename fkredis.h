@@ -5,10 +5,9 @@
 #define FK_REDIS_ERROR   1
 
 /* Open an in-memory fake Redis engine.
- * `path` refers to the pre-requisite Lua module implementation (fakeredis.lua)
  * Return `FK_REDIS_OK` if succeeded, `FK_REDIS_ERROR` otherwise.
  */
-int fkredis_open(void **redis, const char *path);
+int fkredis_open(void **redis);
 
 /* Execute a Redis command.
  * `cmd` is the character string that represents the command (e.g "SET foo bar")
