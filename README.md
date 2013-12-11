@@ -8,7 +8,7 @@ A tiny C wrapper around [@catwell](https://github.com/catwell)'s
 ## Bootstrap
 
 ```
-$ git submodule init --update
+$ git submodule update --init
 ```
 
 ## Demo
