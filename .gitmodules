@@ -1,3 +1,6 @@
 [submodule "fakeredis"]
 	path = fakeredis
 	url = https://github.com/catwell/fakeredis.git
+[submodule "ct"]
+	path = ct
+	url = https://github.com/kr/ct.git
