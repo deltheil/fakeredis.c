@@ -15,12 +15,12 @@ IOS_AR=$(shell xcrun -sdk iphoneos$(IOS_SDK) -find ar)
 _LUA_H=lua.h luaconf.h lualib.h lauxlib.h lua.hpp
 LUA_H=$(addprefix lua-$(LUA_VER)/src/,$(_LUA_H))
 
-all: get-lua build/liblua.a
+all: lua-$(LUA_VER) build/liblua.a
 
 # =================================================
 # liblua -> fat static library for iOS
 # =================================================
-get-lua:
+lua-$(LUA_VER):
 	@echo "================================================= "
 	@echo " DOWNLOADING Lua $(LUA_VER)"
 	@echo "================================================= "
@@ -98,5 +98,6 @@ clean:
 
 distclean:
 	rm -rf build
+	rm -rf lua-$(LUA_VER)
 
 .PHONY: clean distclean
