@@ -9,7 +9,11 @@ fklua.h:
 
 fkredis.c: fklua.h
 
+check: fkredis.o
+	$(MAKE) -C tests clean
+	$(MAKE) -C tests check
+
 clean:
 	rm -f *.o demo fklua.h
 
-.PHONY: all clean
+.PHONY: all clean check
