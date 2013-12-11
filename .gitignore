@@ -1,3 +1,5 @@
 *.o
 demo
 fklua.h
+lua-5.*
+build
