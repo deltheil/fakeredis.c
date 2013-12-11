@@ -5,9 +5,15 @@ A tiny C wrapper around [@catwell](https://github.com/catwell)'s
 
 > A Redis mock for Lua with the same interface as redis-lua.
 
+## Bootstrap
+
+```
+$ git submodule init --update
+```
+
 ## Demo
 
-```bash
+```
 $ export CFLAGS="-I/path/to/lua-5.2/include"
 $ export LDFLAGS="-L/path/to/lua-5.2/lib -llua"
 $ make
