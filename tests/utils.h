@@ -1,8 +1,6 @@
 #ifndef _FAKEREDIS_TEST_UTILS
 #define _FAKEREDIS_TEST_UTILS
 
-#include <stdio.h>
-
 #define FK_SETUP \
   int rc; \
   void *redis = NULL; \
