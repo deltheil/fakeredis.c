@@ -54,8 +54,13 @@ build/fkredis-x86_64.o: CFLAGS=-isysroot $(IOS_SIM_SDK_ROOT) -arch x86_64 \
 build/fkredis-x86_64.o: fkredis.c fkredis.h fklua.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
+fklua.h:
+	@echo "converting lua -> C..."
+	@./lua2c.sh
+
 clean:
 	rm -f build/*.o
 	rm -f build/libfakeredis.a
+	rm fklua.h
 
 .PHONY: clean
