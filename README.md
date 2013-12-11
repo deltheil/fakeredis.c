@@ -14,6 +14,32 @@ $ make
 $ ./demo
 ```
 
+## iOS build
+
+```
+$ make -f ios.mk
+```
+
+Then add these files to your iOS project:
+
+* `build/fkredis.h`
+* `build/libfakeredis.a`
+* `build/liblua.a`
+
+### Lua build only
+
+The project includes a `Makefile` dedicated to build a Lua fat static library for
+iOS. It is standalone and could be used as follow:
+
+```
+$ make -f lua-ios.mk
+```
+
+Copy `build/*.h` and `build/liblua.a` to your iOS project.
+
+The library is a 5-sliced fat library including `armv7`, `armv7s`, `arm64`,
+`i386` and `x86_64` architectures. It is thus usable with the iOS simulator.
+
 # Copyright
 
 Copyright (c) 2013 Cédric Deltheil
