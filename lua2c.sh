@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 rm -f fklua.h
 ./bin2c.sh fakeredis/fakeredis.lua >> fklua.h
 for i in modules/*.lua; do

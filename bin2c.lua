@@ -24,7 +24,7 @@ http://lua-users.org/wiki/BinTwoCee
 
 if not arg or not arg[1] then
   io.stderr:write(description)
-  return
+  os.exit(1)
 end
 
 local compile, filename = arg[1]:match"^(+?)(.*)"
