@@ -13,6 +13,8 @@ $ git submodule update --init
 
 ## Demo
 
+> Prerequisite: you need Lua 5.2.x installed on your system.
+
 ```
 $ export CFLAGS="-I/path/to/lua-5.2/include"
 $ export LDFLAGS="-L/path/to/lua-5.2/lib -llua"
