@@ -83,14 +83,11 @@ cttest_quotes(void)
   FK_ASSERT_OK("SET mykey1 \"Hello\"", "true");
   FK_ASSERT_OK("GET mykey1", "Hello");
 
-  /* TODO: double quotes are not supported yet */
-  /*
   FK_ASSERT_OK("SET mykey2 \"Hello World\"", "true");
   FK_ASSERT_OK("GET mykey2", "Hello World");
 
-  FK_ASSERT_OK("SET mykey3 \"Hello \\\\ World\"", "true");
-  FK_ASSERT_OK("GET mykey3", "Hello \\\\ World");
-  */
+  FK_ASSERT_OK("SET mykey3 \" abc   def f \"", "true");
+  FK_ASSERT_OK("GET mykey3", " abc   def f ");
 
   FK_TEARDOWN
 }
