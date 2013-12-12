@@ -52,6 +52,7 @@ fkredis_open(void **redis)
   if (!lua) {
     return FK_REDIS_ERROR;
   }
+  *redis = lua;
   luaL_openlibs(lua);
   char **fkerr = lua_newuserdata(lua, sizeof(*fkerr));
   *fkerr = NULL;
@@ -86,7 +87,6 @@ fkredis_open(void **redis)
   FK_LOAD_LUA_MODULE(FK_LUA_FMT, fk_lua_fmt);
   FK_LOAD_LUA_MODULE(FK_LUA_EXEC, fk_lua_exec);
   FK_LOAD_LUA_MODULE(FK_LUA_FILTERR, fk_lua_filterr);
-  *redis = lua;
   return FK_REDIS_OK;
 }
 
