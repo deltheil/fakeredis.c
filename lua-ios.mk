@@ -15,6 +15,9 @@ IOS_AR=$(shell xcrun -sdk iphoneos$(IOS_SDK) -find ar)
 _LUA_H=lua.h luaconf.h lualib.h lauxlib.h lua.hpp
 LUA_H=$(addprefix lua-$(LUA_VER)/src/,$(_LUA_H))
 
+# Turn on LUA_USE_POSIX et al.
+_MYSYSCFLAGS=-DLUA_USE_MACOSX
+
 all: lua-$(LUA_VER) build/liblua.a
 
 # =================================================
@@ -45,7 +48,8 @@ build/liblua-armv7.a: _MYCFLAGS=-isysroot $(IOS_SDK_ROOT) -arch armv7 -mthumb \
 build/liblua-armv7.a:
 	install -d $(shell dirname $@)
 	$(MAKE) -C lua-$(LUA_VER)/src clean
-	$(MAKE) -C lua-$(LUA_VER)/src a CC=$(IOS_CC) AR="$(IOS_AR) rcu" MYCFLAGS="$(_MYCFLAGS)"
+	$(MAKE) -C lua-$(LUA_VER)/src a CC=$(IOS_CC) AR="$(IOS_AR) rcu" \
+	SYSCFLAGS="$(_MYSYSCFLAGS)" MYCFLAGS="$(_MYCFLAGS)"
 	cp lua-$(LUA_VER)/src/liblua.a $@
 
 # =================================================
@@ -56,7 +60,8 @@ build/liblua-armv7s.a: _MYCFLAGS=-isysroot $(IOS_SDK_ROOT) -arch armv7s -mthumb 
 build/liblua-armv7s.a:
 	install -d $(shell dirname $@)
 	$(MAKE) -C lua-$(LUA_VER)/src clean
-	$(MAKE) -C lua-$(LUA_VER)/src a CC=$(IOS_CC) AR="$(IOS_AR) rcu" MYCFLAGS="$(_MYCFLAGS)"
+	$(MAKE) -C lua-$(LUA_VER)/src a CC=$(IOS_CC) AR="$(IOS_AR) rcu" \
+	SYSCFLAGS="$(_MYSYSCFLAGS)" MYCFLAGS="$(_MYCFLAGS)"
 	cp lua-$(LUA_VER)/src/liblua.a $@
 
 # =================================================
@@ -67,7 +72,8 @@ build/liblua-arm64.a: _MYCFLAGS=-isysroot $(IOS_SDK_ROOT) -arch arm64 \
 build/liblua-arm64.a:
 	install -d $(shell dirname $@)
 	$(MAKE) -C lua-$(LUA_VER)/src clean
-	$(MAKE) -C lua-$(LUA_VER)/src a CC=$(IOS_CC) AR="$(IOS_AR) rcu" MYCFLAGS="$(_MYCFLAGS)"
+	$(MAKE) -C lua-$(LUA_VER)/src a CC=$(IOS_CC) AR="$(IOS_AR) rcu" \
+	SYSCFLAGS="$(_MYSYSCFLAGS)" MYCFLAGS="$(_MYCFLAGS)"
 	cp lua-$(LUA_VER)/src/liblua.a $@
 
 # =================================================
@@ -78,7 +84,8 @@ build/liblua-i386.a: _MYCFLAGS=-isysroot $(IOS_SIM_SDK_ROOT) -arch i386 \
 build/liblua-i386.a:
 	install -d $(shell dirname $@)
 	$(MAKE) -C lua-$(LUA_VER)/src clean
-	$(MAKE) -C lua-$(LUA_VER)/src a CC=$(IOS_SIM_CC) AR="$(IOS_AR) rcu" MYCFLAGS="$(_MYCFLAGS)"
+	$(MAKE) -C lua-$(LUA_VER)/src a CC=$(IOS_SIM_CC) AR="$(IOS_AR) rcu" \
+	SYSCFLAGS="$(_MYSYSCFLAGS)" MYCFLAGS="$(_MYCFLAGS)"
 	cp lua-$(LUA_VER)/src/liblua.a $@
 
 # =================================================
@@ -89,7 +96,8 @@ build/liblua-x86_64.a: _MYCFLAGS=-isysroot $(IOS_SIM_SDK_ROOT) -arch x86_64 \
 build/liblua-x86_64.a:
 	install -d $(shell dirname $@)
 	$(MAKE) -C lua-$(LUA_VER)/src clean
-	$(MAKE) -C lua-$(LUA_VER)/src a CC=$(IOS_SIM_CC) AR="$(IOS_AR) rcu" MYCFLAGS="$(_MYCFLAGS)"
+	$(MAKE) -C lua-$(LUA_VER)/src a CC=$(IOS_SIM_CC) AR="$(IOS_AR) rcu" \
+	SYSCFLAGS="$(_MYSYSCFLAGS)" MYCFLAGS="$(_MYCFLAGS)"
 	cp lua-$(LUA_VER)/src/liblua.a $@
 
 clean:
