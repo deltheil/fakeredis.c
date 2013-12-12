@@ -63,6 +63,6 @@ fklua.h:
 clean:
 	rm -f build/*.o
 	rm -f build/libfakeredis.a
-	rm fklua.h
+	rm -f fklua.h
 
 .PHONY: clean
