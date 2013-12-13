@@ -45,7 +45,7 @@ $ make -f lua-ios.mk
 
 Copy `build/*.h` and `build/liblua.a` to your iOS project.
 
-The library is a 5-sliced fat library including `armv7`, `armv7s`, `arm64`,
+The library is a 5 slices fat library including `armv7`, `armv7s`, `arm64`,
 `i386` and `x86_64` architectures. It is thus usable with the iOS simulator.
 
 # Copyright
