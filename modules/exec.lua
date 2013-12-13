@@ -1,5 +1,5 @@
-_exec = function(rds, cmd)
+_exec = function(redis, cmd)
   local args = _tokenize(cmd)
   local cmd = string.lower(args[1])
-  return rds[cmd] and _fmt(rds[cmd](rds, unpack(args, 2)))
+  return redis[cmd] and _fmtreply(redis[cmd](redis, unpack(args, 2)))
 end

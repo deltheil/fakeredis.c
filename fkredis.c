@@ -103,7 +103,7 @@ fkredis_open(void **redis)
   lua_setglobal(lua, FK_LUA_RAWFMT);
   lua_settop(lua, 0);
   /* load internal Lua tools */
-  FK_LOAD_LUA_MODULE(FK_LUA_FMT, fk_lua_fmt);
+  FK_LOAD_LUA_MODULE(FK_LUA_FMTREPLY, fk_lua_fmtreply);
   FK_LOAD_LUA_MODULE(FK_LUA_EXEC, fk_lua_exec);
   FK_LOAD_LUA_MODULE(FK_LUA_FILTERR, fk_lua_filterr);
   return FK_REDIS_OK;

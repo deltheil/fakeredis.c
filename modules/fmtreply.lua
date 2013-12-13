@@ -2,7 +2,7 @@ local is_integer = function(x)
   return (type(x) == "number") and (math.floor(x) == x)
 end
 
-_fmt = function(res)
+_fmtreply = function(res)
   if is_integer(res) then
     return "(integer) " .. res
   elseif type(res) == "boolean" then
