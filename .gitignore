@@ -1,5 +1,6 @@
 *.o
 demo
+fksh
 fklua.h
 lua-5.*
 build

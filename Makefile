@@ -1,6 +1,9 @@
 override CFLAGS += -Wall -Werror
 
-all: demo
+all: demo fksh
+
+fksh: fksh.o fkredis.o sds.o
+	$(CC) $^ $(LDFLAGS) -o $@
 
 demo: demo.o fkredis.o sds.o
 	$(CC) $^ $(LDFLAGS) -o $@
@@ -14,7 +17,7 @@ check: fkredis.o sds.o
 	$(MAKE) -C tests check
 
 clean:
-	rm -f *.o demo fklua.h
+	rm -f *.o demo fksh fklua.h
 
 .PHONY: all clean check
 
