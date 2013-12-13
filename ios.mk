@@ -13,6 +13,10 @@ IOS_AR=$(shell xcrun -sdk iphoneos$(IOS_SDK) -find ar)
 
 MYCFLAGS=-I. -Ibuild -Os
 
+_ALL_A=libfakeredis-armv7.a libfakeredis-armv7s.a libfakeredis-arm64.a \
+libfakeredis-i386.a libfakeredis-x86_64.a
+ALL_A=$(addprefix build/,$(_ALL_A))
+
 all: lib
 
 lib: build/liblua.a build/libfakeredis.a
@@ -20,40 +24,54 @@ lib: build/liblua.a build/libfakeredis.a
 build/liblua.a:
 	@$(MAKE) -f lua-ios.mk
 
-build/libfakeredis.a: build/fkredis-armv7.o build/fkredis-armv7s.o \
-	build/fkredis-arm64.o build/fkredis-i386.o build/fkredis-x86_64.o
+build/libfakeredis.a: $(ALL_A)
 	install -d $(shell dirname $@)
 	$(IOS_LIPO) -output $@ -create $^
 	cp fkredis.h $(shell dirname $@)
 
-build/fkredis-armv7.o: CC=$(IOS_CC)
-build/fkredis-armv7.o: CFLAGS=-isysroot $(IOS_SDK_ROOT) -arch armv7 -mthumb \
+build/libfakeredis-armv7.a: build/fkredis-armv7.o build/sds-armv7.o
+	$(IOS_AR) cq $@ $^
+
+build/libfakeredis-armv7s.a: build/fkredis-armv7s.o build/sds-armv7s.o
+	$(IOS_AR) cq $@ $^
+
+build/libfakeredis-arm64.a: build/fkredis-arm64.o build/sds-arm64.o
+	$(IOS_AR) cq $@ $^
+
+build/libfakeredis-i386.a: build/fkredis-i386.o build/sds-i386.o
+	$(IOS_AR) cq $@ $^
+
+build/libfakeredis-x86_64.a: build/fkredis-x86_64.o build/sds-x86_64.o
+	$(IOS_AR) cq $@ $^
+
+build/%-armv7.o: CC=$(IOS_CC)
+build/%-armv7.o: CFLAGS=-isysroot $(IOS_SDK_ROOT) -arch armv7 -mthumb \
 	-miphoneos-version-min=4.0 $(MYCFLAGS)
-build/fkredis-armv7.o: fkredis.c fkredis.h fklua.h
+build/%-armv7.o: %.c
 	$(CC) -c $(CFLAGS) $< -o $@
 
-build/fkredis-armv7s.o: CC=$(IOS_CC)
-build/fkredis-armv7s.o: CFLAGS=-isysroot $(IOS_SDK_ROOT) -arch armv7s -mthumb \
+build/%-armv7s.o: CC=$(IOS_CC)
+build/%-armv7s.o: CFLAGS=-isysroot $(IOS_SDK_ROOT) -arch armv7s -mthumb \
 	-miphoneos-version-min=4.0 $(MYCFLAGS)
-build/fkredis-armv7s.o: fkredis.c fkredis.h fklua.h
+build/%-armv7s.o: %.c
 	$(CC) -c $(CFLAGS) $< -o $@
 
-build/fkredis-arm64.o: CC=$(IOS_CC)
-build/fkredis-arm64.o: CFLAGS=-isysroot $(IOS_SDK_ROOT) -arch arm64 \
+build/%-arm64.o: CC=$(IOS_CC)
+build/%-arm64.o: CFLAGS=-isysroot $(IOS_SDK_ROOT) -arch arm64 \
 	-miphoneos-version-min=7.0 $(MYCFLAGS)
-build/fkredis-arm64.o: fkredis.c fkredis.h fklua.h
+build/%-arm64.o: %.c
 	$(CC) -c $(CFLAGS) $< -o $@
 
-build/fkredis-i386.o: CC=$(IOS_CC)
-build/fkredis-i386.o: CFLAGS=-isysroot $(IOS_SIM_SDK_ROOT) -arch i386 \
+build/%-i386.o: CC=$(IOS_CC)
+build/%-i386.o: CFLAGS=-isysroot $(IOS_SIM_SDK_ROOT) -arch i386 \
 	-miphoneos-version-min=4.0 $(MYCFLAGS)
-build/fkredis-i386.o: fkredis.c fkredis.h fklua.h
+build/%-i386.o: %.c
 	$(CC) -c $(CFLAGS) $< -o $@
 
-build/fkredis-x86_64.o: CC=$(IOS_CC)
-build/fkredis-x86_64.o: CFLAGS=-isysroot $(IOS_SIM_SDK_ROOT) -arch x86_64 \
+build/%-x86_64.o: CC=$(IOS_CC)
+build/%-x86_64.o: CFLAGS=-isysroot $(IOS_SIM_SDK_ROOT) -arch x86_64 \
 	-miphoneos-version-min=4.0 $(MYCFLAGS)
-build/fkredis-x86_64.o: fkredis.c fkredis.h fklua.h
+build/%-x86_64.o: %.c
 	$(CC) -c $(CFLAGS) $< -o $@
 
 fklua.h:
@@ -66,3 +84,14 @@ clean:
 	rm -f fklua.h
 
 .PHONY: clean
+
+build/fkredis-armv7.o: fkredis.h fklua.h
+build/fkredis-armv7s.o: fkredis.h fklua.h
+build/fkredis-arm64.o: fkredis.h fklua.h
+build/fkredis-i386.o: fkredis.h fklua.h
+build/fkredis-x86_64.o: fkredis.h fklua.h
+build/sds-armv7.o: sds.h
+build/sds-armv7s.o: sds.h
+build/sds-arm64.o: sds.h
+build/sds-i386.o: sds.h
+build/sds-x86_64.o: sds.h

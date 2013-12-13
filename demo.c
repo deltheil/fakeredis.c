@@ -50,6 +50,10 @@ main(void)
   EXEC_CMD("LPUSH cities new-york");
   EXEC_CMD("LPUSH cities tokyo");
   EXEC_CMD("LRANGE cities 0 -1");
+  EXEC_CMD("SETBIT mykey 32 1");
+  EXEC_CMD("GET mykey");
+  EXEC_CMD("SET misc \"Hello World\"");
+  EXEC_CMD("GET misc");
 
   fkredis_close(redis);
 

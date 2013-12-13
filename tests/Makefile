@@ -2,7 +2,7 @@ override CFLAGS += -Werror -Wall -I..
 
 tests = $(wildcard *-test.c)
 tobjs = $(tests:.c=.o)
-tobjs += ../fkredis.o
+tobjs += ../fkredis.o ../sds.o
 
 .PHONY: check
 check: ct/_ctcheck

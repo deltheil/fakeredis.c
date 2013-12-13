@@ -11,7 +11,7 @@ cttest_helloworld(void)
   FK_SETUP
 
   FK_ASSERT_OK("SET foo bar", "true");
-  FK_ASSERT_OK("GET foo", "bar");
+  FK_ASSERT_OK("GET foo", "\"bar\"");
 
   FK_TEARDOWN
 }
@@ -43,7 +43,7 @@ cttest_multiresult1(void)
 
   FK_ASSERT_OK("SET foo bar", "true");
   FK_ASSERT_OK("SET scm git", "true");
-  FK_ASSERT_OK("MGET foo scm", "1) bar\n2) git");
+  FK_ASSERT_OK("MGET foo scm", "1) \"bar\"\n2) \"git\"");
 
   FK_TEARDOWN
 }
@@ -56,7 +56,7 @@ cttest_multiresult2(void)
   FK_ASSERT_OK("LPUSH cities paris", "(integer) 1");
   FK_ASSERT_OK("LPUSH cities new-york", "(integer) 2");
   FK_ASSERT_OK("LPUSH cities tokyo", "(integer) 3");
-  FK_ASSERT_OK("LRANGE cities 0 -1", "1) tokyo\n2) new-york\n3) paris");
+  FK_ASSERT_OK("LRANGE cities 0 -1", "1) \"tokyo\"\n2) \"new-york\"\n3) \"paris\"");
 
   FK_TEARDOWN
 }
@@ -81,13 +81,13 @@ cttest_quotes(void)
   FK_SETUP
 
   FK_ASSERT_OK("SET mykey1 \"Hello\"", "true");
-  FK_ASSERT_OK("GET mykey1", "Hello");
+  FK_ASSERT_OK("GET mykey1", "\"Hello\"");
 
   FK_ASSERT_OK("SET mykey2 \"Hello World\"", "true");
-  FK_ASSERT_OK("GET mykey2", "Hello World");
+  FK_ASSERT_OK("GET mykey2", "\"Hello World\"");
 
   FK_ASSERT_OK("SET mykey3 \" abc   def f \"", "true");
-  FK_ASSERT_OK("GET mykey3", " abc   def f ");
+  FK_ASSERT_OK("GET mykey3", "\" abc   def f \"");
 
   FK_TEARDOWN
 }
