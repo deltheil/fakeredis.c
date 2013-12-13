@@ -1,3 +1,5 @@
+override CFLAGS += -Wall -Werror
+
 all: demo
 
 demo: demo.o fkredis.o sds.o

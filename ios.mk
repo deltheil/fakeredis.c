@@ -11,7 +11,7 @@ IOS_SIM_CC=$(shell xcrun -sdk iphonesimulator$(IOS_SDK) -find clang)
 IOS_LIPO=$(shell xcrun -sdk iphoneos$(IOS_SDK) -find lipo)
 IOS_AR=$(shell xcrun -sdk iphoneos$(IOS_SDK) -find ar)
 
-MYCFLAGS=-I. -Ibuild -Os
+MYCFLAGS=-Wall -Werror -I. -Ibuild -Os
 
 _ALL_A=libfakeredis-armv7.a libfakeredis-armv7s.a libfakeredis-arm64.a \
 libfakeredis-i386.a libfakeredis-x86_64.a
