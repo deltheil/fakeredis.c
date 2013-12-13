@@ -1,5 +1,9 @@
+local is_integer = function(x)
+  return (type(x) == "number") and (math.floor(x) == x)
+end
+
 _fmt = function(res)
-  if type(res) == "number" then
+  if is_integer(res) then
     return "(integer) " .. res
   elseif type(res) == "boolean" then
     return res and "true" or "false"

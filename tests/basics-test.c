@@ -93,6 +93,17 @@ cttest_quotes(void)
 }
 
 void
+cttest_float(void)
+{
+  FK_SETUP
+
+  FK_ASSERT_OK("HSET mykey field 10.50", "true");
+  FK_ASSERT_OK("HINCRBYFLOAT mykey field 0.1", "\"10.6\"");
+
+  FK_TEARDOWN
+}
+
+void
 cttesterr_nocmd(void)
 {
   FK_SETUP
