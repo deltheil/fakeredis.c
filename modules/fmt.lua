@@ -13,7 +13,12 @@ _fmt = function(res)
     local t = {}
     for k, v in pairs(res) do
       if type(k) == "number" then
-        t[#t+1] = k .. ") " .. _rawfmt(v)
+        if type(v) == "table" then -- zadd et al. return {value, score} pairs
+          t[#t+1] = (2*k-1) .. ") " .. _rawfmt(v[1])
+          t[#t+1] = (2*k)   .. ") " .. _rawfmt(v[2])
+        else
+          t[#t+1] = k .. ") " .. _rawfmt(v)
+        end
       else
         t[#t+1] = #t+1 .. ") " .. _rawfmt(k)
         t[#t+1] = #t+1 .. ") " .. _rawfmt(v)

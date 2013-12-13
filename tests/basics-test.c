@@ -107,6 +107,20 @@ cttest_float(void)
 }
 
 void
+cttest_withscores(void)
+{
+  FK_SETUP
+
+  FK_ASSERT_OK("ZADD myzset 1 \"one\"", "(integer) 1");
+  FK_ASSERT_OK("ZADD myzset 2 \"two\"", "(integer) 1");
+  FK_ASSERT_OK("ZADD myzset 3 \"three\"", "(integer) 1");
+  FK_ASSERT_OK("ZRANGE myzset 0 1 WITHSCORES", "1) \"one\"\n2) \"1\"\n"
+               "3) \"two\"\n4) \"2\"");
+
+  FK_TEARDOWN
+}
+
+void
 cttesterr_nocmd(void)
 {
   FK_SETUP
