@@ -67,10 +67,13 @@ cttest_multiresult3(void)
   FK_SETUP
 
   FK_ASSERT_OK("HSET props width 320", "true");
+  FK_ASSERT_OK("HGETALL props", "1) \"width\"\n2) \"320\"");
+  /* TODO: order is not guaranteed: do something else here... */
+#if 0
   FK_ASSERT_OK("HSET props height 480", "true");
   FK_ASSERT_OK("HSET props model retina", "true");
-  /* TODO: order is not guaranteed: do something else here... */
-  /*FK_ASSERT_OK("HGETALL props", "1) width\n2) 320\n3) height\n4) 480\n5) model\n6) retina");*/
+  FK_ASSERT_OK("HGETALL props", "1) width\n2) 320\n3) height\n4) 480\n5) model\n6) retina");
+#endif
 
   FK_TEARDOWN
 }
