@@ -24,7 +24,7 @@ _fmtreply = function(res)
         t[#t+1] = #t+1 .. ") " .. _rawfmt(v)
       end
     end
-    return table.concat(t, "\n")
+    return (#t > 0) and table.concat(t, "\n") or "(empty list or set)"
   else
     return _rawfmt(tostring(res))
   end

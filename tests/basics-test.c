@@ -121,6 +121,19 @@ cttest_withscores(void)
 }
 
 void
+cttest_empty(void)
+{
+  FK_SETUP
+
+  FK_ASSERT_OK("LRANGE x 0 -1", "(empty list or set)");
+  FK_ASSERT_OK("HGETALL x", "(empty list or set)");
+  FK_ASSERT_OK("SMEMBERS x", "(empty list or set)");
+  FK_ASSERT_OK("ZRANGE x 0 -1", "(empty list or set)");
+
+  FK_TEARDOWN
+}
+
+void
 cttesterr_nocmd(void)
 {
   FK_SETUP
