@@ -377,7 +377,7 @@ sds sdsfromlonglong(long long value) {
     return sdsnewlen(p,32-(p-buf));
 }
 
-sds sdscatrepr(sds s, char *p, size_t len) {
+sds sdscatrepr(sds s, const char *p, size_t len) {
     s = sdscatlen(s,"\"",1);
     if (s == NULL) return NULL;
 
@@ -417,8 +417,8 @@ sds sdscatrepr(sds s, char *p, size_t len) {
  * Note that sdscatrepr() is able to convert back a string into
  * a quoted string in the same format sdssplitargs() is able to parse.
  */
-sds *sdssplitargs(char *line, int *argc) {
-    char *p = line;
+sds *sdssplitargs(const char *line, int *argc) {
+    const char *p = line;
     char *current = NULL;
     char **vector = NULL, **_vector = NULL;
 
