@@ -1,12 +1,43 @@
+-- Status code reply (true -> "OK", ping -> "PONG")
+local _sreply = {
+  ping = "PONG",
+  set = true,
+  mset = true,
+  flushall = true,
+  flushdb = true,
+  hmset = true,
+  lset = true,
+  ltrim = true,
+  rename = true
+}
+
+-- Integer reply (true -> "(integer) 1", false -> "(integer) 0")
+local _ireply = {
+  exists = true,
+  hset = true,
+  hsetnx = true,
+  hexists = true,
+  renamenx = true,
+  setnx = true,
+  msetnx = true,
+  sismember = true,
+  smove = true
+}
+
 local is_integer = function(x)
   return (type(x) == "number") and (math.floor(x) == x)
 end
 
-_fmtreply = function(res)
+_fmtreply = function(cmd, res)
+  -- specific cases
+  if _sreply[cmd] then
+    return (_sreply[cmd] == true) and "OK" or _sreply[cmd]
+  elseif _ireply[cmd] then
+    return "(integer) " .. (res and "1" or "0") -- res is a boolean
+  end
+  -- generic format reply
   if is_integer(res) then
     return "(integer) " .. res
-  elseif type(res) == "boolean" then
-    return res and "true" or "false"
   elseif type(res) == "nil" then
     return "(nil)"
   elseif type(res) == "table" then
