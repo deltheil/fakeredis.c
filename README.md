@@ -22,6 +22,25 @@ $ make
 $ ./demo
 ```
 
+## Live demo
+
+You can quickly experiment it as follow:
+
+```
+$ ./fksh
+redis> SET foo bar
+OK
+redis> GET foo
+"bar"
+```
+
+> Pro-tip: use [rlwrap](http://utopia.knoware.nl/~hlub/rlwrap/) for dead easy
+readline support! On OS X: `brew install rlwrap`
+
+```
+$ rlwrap -H hist.log ./fksh
+```
+
 ## iOS build
 
 ```
