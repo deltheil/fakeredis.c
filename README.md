@@ -5,6 +5,18 @@ A tiny C wrapper around [@catwell](https://github.com/catwell)'s
 
 > A Redis mock for Lua with the same interface as redis-lua.
 
+## Use cases
+
+fakeredis.c has been created to power [Snippets](http://usesnippets.com/) - an
+iOS app that lets you learn and experiment Redis on-the-go.
+
+It is also useful for educational purposes since it illustrates how to:
+
+* call Lua from C: see [exec](https://github.com/deltheil/fakeredis.c/blob/1515887/fkredis.c#L115-L122),
+* call C from Lua: see [tokenize](https://github.com/deltheil/fakeredis.c/blob/1515887/fkredis.c#L179-L198),
+* embed Lua code in a C library: see [bin2c.lua](https://github.com/deltheil/fakeredis.c/blob/1515887/bin2c.lua),
+* build Lua as a fat static library for iOS: see [lua-ios.mk](https://github.com/deltheil/fakeredis.c/blob/1515887/lua-ios.mk)
+
 ## Bootstrap
 
 ```
