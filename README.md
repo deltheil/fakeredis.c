@@ -25,7 +25,7 @@ $ git submodule update --init
 
 ## Demo
 
-> Prerequisite: you need Lua 5.2.x installed on your system.
+> Prerequisite: you need **Lua 5.2.x** installed on your system.
 
 ```
 $ export CFLAGS="-I/path/to/lua-5.2/include"
@@ -81,4 +81,4 @@ The library is a 5 slices fat library including `armv7`, `armv7s`, `arm64`,
 
 # Copyright
 
-Copyright (c) 2013 Cédric Deltheil
+Copyright (c) 2014 Cédric Deltheil
