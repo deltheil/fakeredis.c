@@ -1,5 +1,5 @@
 LUA_VER=5.2.3
-IOS_SDK=7.0
+IOS_SDK=7.1
 
 XCODE_PATH=/Applications/Xcode.app/Contents/Developer
 
