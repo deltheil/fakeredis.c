@@ -81,4 +81,4 @@ The library is a 5 slices fat library including `armv7`, `armv7s`, `arm64`,
 
 # Copyright
 
-Copyright (c) 2014 Cédric Deltheil
+Copyright (c) 2014-2015 Cédric Deltheil
